@@ -16,9 +16,16 @@ import paymentroutes from "./routes/payment.js";
 import subscriptionRoutes from "./routes/subscription.js";
 import friendsRoutes from "./routes/friends.js";
 import path from "path";
+import fs from "fs";
 dotenv.config();
 const app = express();
 const httpServer = createServer(app);
+
+// Ensure uploads directory exists (needed for Render/production)
+const uploadDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
