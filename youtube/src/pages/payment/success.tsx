@@ -25,7 +25,11 @@ const PaymentSuccess = () => {
 
     const verify = async () => {
       try {
-        const response = await axiosInstance.post("/payment/verify", { session_id });
+        const response = await axiosInstance.post(
+          "/payment/verify",
+          { session_id },
+          { timeout: 180000 }
+        );
         setStatus("success");
         
         // 🔹 CRITICAL FIX: Use login() to overwrite the user state completely
