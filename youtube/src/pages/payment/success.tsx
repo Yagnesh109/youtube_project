@@ -28,7 +28,7 @@ const PaymentSuccess = () => {
         const response = await axiosInstance.post(
           "/payment/verify",
           { session_id },
-          { timeout: 180000 }
+          { timeout: 240000 }
         );
         setStatus("success");
         
