@@ -57,7 +57,7 @@ const CombinedRecorder = forwardRef<CombinedRecorderHandle, CombinedRecorderProp
   const audioDestinationRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   const audioSourcesRef = useRef<MediaStreamAudioSourceNode[]>([]);
 
-  const getReadyVideo = (ref: React.RefObject<HTMLVideoElement>) => {
+  const getReadyVideo = (ref: React.RefObject<HTMLVideoElement | null>) => {
     if (ref.current && ref.current.readyState >= 2) return ref.current;
     return null;
   };

@@ -62,7 +62,6 @@ const CameraTest: React.FC = () => {
         trackLabel: videoTrack?.label || 'Unknown',
         settings: settings,
         capabilities: capabilities,
-        active: videoTrack?.active,
         muted: videoTrack?.muted,
         enabled: videoTrack?.enabled
       });
@@ -70,8 +69,7 @@ const CameraTest: React.FC = () => {
       console.log('Stream info:', {
         trackLabel: videoTrack?.label,
         settings,
-        capabilities,
-        active: videoTrack?.active
+        capabilities
       });
       
       setStream(mediaStream);
@@ -274,11 +272,6 @@ const CameraTest: React.FC = () => {
               <div>
                 <p className="text-sm text-gray-400">Track Label</p>
                 <p className="font-mono">{streamInfo.trackLabel}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-400">Active</p>
-                <p className="font-mono">{streamInfo.active ? 'Yes' : 'No'}</p>
               </div>
               
               <div>

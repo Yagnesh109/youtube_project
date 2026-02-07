@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import LoginDialog from "@/components/LoginDialog";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import type { AppProps } from "next/app";
 
 // Wrapper component to handle protection
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
@@ -88,7 +89,7 @@ const CallReturnButton = () => {
   );
 };
 
-export default function App({ Component, pageProps }) {
+export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const isWatchPage = router.pathname.startsWith('/watches/');
   const shouldShowSidebar = !isWatchPage;
