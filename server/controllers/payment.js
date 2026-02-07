@@ -17,7 +17,19 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  connectionTimeout: 20000,
+  greetingTimeout: 20000,
+  socketTimeout: 20000,
 });
+
+transporter
+  .verify()
+  .then(() => {
+    console.log("Email transporter verified");
+  })
+  .catch((err) => {
+    console.error("Email transporter verify failed:", err);
+  });
 
 export const createOrder = async (req, res) => {
     // ... (Keep existing createOrder logic unchanged)
@@ -114,8 +126,8 @@ export const verifyPayment = async (req, res) => {
       console.log("Attempting to send invoice email to:", updatedUser.email);
       transporter
         .sendMail(mailOptions)
-        .then(() => {
-          console.log("Invoice email sent to:", updatedUser.email);
+        .then((info) => {
+          console.log("Invoice email sent to:", updatedUser.email, info?.response || "");
         })
         .catch((emailError) => {
           console.error("Email sending failed:", emailError);
