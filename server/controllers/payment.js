@@ -11,8 +11,14 @@ if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
   console.warn("Email credentials missing: EMAIL_USER/EMAIL_PASS not set");
 }
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
+const hasHost = !!process.env.EMAIL_HOST;
+const port = process.env.EMAIL_PORT ? Number(process.env.EMAIL_PORT) : undefined;
+const secure =
+  process.env.EMAIL_SECURE !== undefined
+    ? String(process.env.EMAIL_SECURE).toLowerCase() === "true"
+    : port === 465;
+
+const baseConfig = {
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -20,7 +26,19 @@ const transporter = nodemailer.createTransport({
   connectionTimeout: 20000,
   greetingTimeout: 20000,
   socketTimeout: 20000,
-});
+};
+
+const transporter = hasHost
+  ? nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: port || 587,
+      secure,
+      ...baseConfig,
+    })
+  : nodemailer.createTransport({
+      service: process.env.EMAIL_SERVICE || "gmail",
+      ...baseConfig,
+    });
 
 transporter
   .verify()
