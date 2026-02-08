@@ -236,7 +236,7 @@ export const sendOTP = async (req, res) => {
         
         console.log(`📤 Attempting to send email to ${email}...`);
         await transporter.sendMail({
-          from: process.env.EMAIL_USER,
+          from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
           to: email,
           subject: "Verify your Login",
           text: `Your Verification OTP is ${otp}.`

@@ -121,7 +121,7 @@ export const verifyPayment = async (req, res) => {
 
       // 4. Send Invoice Email (fire-and-forget so API doesn't hang)
       const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
         to: updatedUser.email,
         subject: `Invoice: ${plan} Plan Upgrade Successful`,
         html: `
