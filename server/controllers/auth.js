@@ -2,6 +2,7 @@ import users from "../Modals/Auth.js";
 import mongoose from "mongoose";
 import OTP from "../Modals/OTP.js";
 import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 import jwt from "jsonwebtoken"; // Ensure you have: npm install jsonwebtoken
 import dotenv from "dotenv";
 
@@ -40,6 +41,32 @@ const getTransporter = () => {
   return nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE || "gmail",
     ...baseConfig,
+  });
+};
+
+const sendEmail = async ({ to, subject, text, html }) => {
+  if (process.env.SENDGRID_API_KEY) {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    await sgMail.send({
+      to,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      subject,
+      text,
+      html,
+    });
+    return;
+  }
+
+  const transporter = getTransporter();
+  if (!transporter) {
+    throw new Error("Email transporter not configured");
+  }
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+    to,
+    subject,
+    text,
+    html,
   });
 };
 
@@ -208,11 +235,12 @@ export const sendOTP = async (req, res) => {
     if (type === 'email') {
       // Debug: Check if credentials are loaded
       console.log("📧 Email Config Check:");
+      console.log("SENDGRID_API_KEY:", process.env.SENDGRID_API_KEY ? "✅ Set (hidden)" : "❌ Missing");
       console.log("EMAIL_USER:", process.env.EMAIL_USER ? `✅ ${process.env.EMAIL_USER}` : "❌ Missing");
       console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "✅ Set (hidden)" : "❌ Missing");
       
       // Development mode: If email not configured, log OTP to console
-      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      if (!process.env.SENDGRID_API_KEY && (!process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
         console.log("=".repeat(60));
         console.log("📧 EMAIL OTP (Development Mode - Email not configured)");
         console.log("=".repeat(60));
@@ -229,17 +257,11 @@ export const sendOTP = async (req, res) => {
       }
       
       try {
-        const transporter = getTransporter();
-        if (!transporter) {
-          throw new Error("Email transporter not configured");
-        }
-        
         console.log(`📤 Attempting to send email to ${email}...`);
-        await transporter.sendMail({
-          from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        await sendEmail({
           to: email,
           subject: "Verify your Login",
-          text: `Your Verification OTP is ${otp}.`
+          text: `Your Verification OTP is ${otp}.`,
         });
         console.log(`✅ Email OTP sent successfully to ${email}`);
       } catch (emailError) {

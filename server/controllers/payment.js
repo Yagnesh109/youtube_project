@@ -2,13 +2,14 @@ import Stripe from "stripe"; //
 import users from "../Modals/Auth.js";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 
 dotenv.config();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-  console.warn("Email credentials missing: EMAIL_USER/EMAIL_PASS not set");
+if (!process.env.SENDGRID_API_KEY && (!process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+  console.warn("Email credentials missing: SENDGRID_API_KEY or EMAIL_USER/EMAIL_PASS not set");
 }
 
 const hasHost = !!process.env.EMAIL_HOST;
@@ -40,14 +41,38 @@ const transporter = hasHost
       ...baseConfig,
     });
 
-transporter
-  .verify()
-  .then(() => {
-    console.log("Email transporter verified");
-  })
-  .catch((err) => {
-    console.error("Email transporter verify failed:", err);
+if (!process.env.SENDGRID_API_KEY) {
+  transporter
+    .verify()
+    .then(() => {
+      console.log("Email transporter verified");
+    })
+    .catch((err) => {
+      console.error("Email transporter verify failed:", err);
+    });
+}
+
+const sendEmail = async ({ to, subject, text, html }) => {
+  if (process.env.SENDGRID_API_KEY) {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    await sgMail.send({
+      to,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      subject,
+      text,
+      html,
+    });
+    return;
+  }
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+    to,
+    subject,
+    text,
+    html,
   });
+};
 
 export const createOrder = async (req, res) => {
     // ... (Keep existing createOrder logic unchanged)
@@ -149,8 +174,11 @@ export const verifyPayment = async (req, res) => {
       };
 
       console.log("Attempting to send invoice email to:", updatedUser.email);
-      transporter
-        .sendMail(mailOptions)
+      sendEmail({
+        to: updatedUser.email,
+        subject: mailOptions.subject,
+        html: mailOptions.html,
+      })
         .then((info) => {
           console.log("Invoice email sent to:", updatedUser.email, info?.response || "");
         })
