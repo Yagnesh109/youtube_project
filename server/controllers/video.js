@@ -194,8 +194,14 @@ export const downloadVideo = async (req, res) => {
 
     // 4. Send the File
     if (typeof videoDoc.filepath === "string" && videoDoc.filepath.startsWith("http")) {
+      let downloadUrl = videoDoc.filepath;
+      if (downloadUrl.includes("res.cloudinary.com") && downloadUrl.includes("/upload/")) {
+        // Force attachment download on Cloudinary
+        downloadUrl = downloadUrl.replace("/upload/", "/upload/fl_attachment/");
+      }
+
       return res.status(200).json({
-        downloadUrl: videoDoc.filepath,
+        downloadUrl,
         message: "Download approved",
       });
     }
