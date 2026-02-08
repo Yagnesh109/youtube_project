@@ -6,6 +6,7 @@ const videoschema = new mongoose.Schema(
     filetype: { type: String, require: true },
     filepath: { type: String, require: true },
     filesize: { type: String, require: true },
+    cloudinaryId: { type: String },
     videochanel: { type: String, require: true },
     Like: { type: Number, default: 0 },
     Dislike: { type: Number, default: 0 },

@@ -4,9 +4,16 @@ import mongoose from "mongoose";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { v2 as cloudinary } from "cloudinary";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export const getVideosByUser = async (req, res) => {
   const { userId } = req.params;
@@ -50,19 +57,47 @@ export const uploadvideo = async (req, res) => {
     return res.status(404).json({ message: "Upload a MP4 video file only" });
   } else {
     try {
+      if (
+        !process.env.CLOUDINARY_CLOUD_NAME ||
+        !process.env.CLOUDINARY_API_KEY ||
+        !process.env.CLOUDINARY_API_SECRET
+      ) {
+        return res.status(500).json({ message: "Cloudinary is not configured" });
+      }
+
+      const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: "video",
+        folder: process.env.CLOUDINARY_FOLDER || "youtube-clone",
+      });
+
+      // Clean up the temp file
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupError) {
+        console.warn("Failed to delete temp upload:", cleanupError.message);
+      }
+
       const file = new video({
         videotitle: req.body.videotitle,
         filename: req.file.originalname,
-        filepath: req.file.path,
+        filepath: uploadResult.secure_url,
         filetype: req.file.mimetype,
         filesize: req.file.size,
+        cloudinaryId: uploadResult.public_id,
         videochanel: req.body.videochanel,
         uploader: req.body.uploader,
       });
       await file.save();
       res.status(201).json(file);
     } catch (error) {
-      console.error("Login error:", error);
+      if (req.file?.path) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch {
+          // best-effort cleanup
+        }
+      }
+      console.error("Upload error:", error);
       res.status(500).json({ message: error.message });
     }
   }
