@@ -55,7 +55,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
   const [screenShareError, setScreenShareError] = useState<string>("");
   const [recordingMode, setRecordingMode] = useState<
     "camera-only" | "screen-only" | "combined" | "picture-in-picture"
-  >("picture-in-picture");
+  >("combined");
   const [localPreviewPos, setLocalPreviewPos] = useState({ x: 0, y: 0 });
   const [isPipActive, setIsPipActive] = useState(false);
   const dragStateRef = useRef<{
@@ -63,6 +63,7 @@ const VideoCall: React.FC<VideoCallProps> = ({
     offsetX: number;
     offsetY: number;
   }>({ dragging: false, offsetX: 0, offsetY: 0 });
+  const isCallActiveRef = useRef(false);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -695,6 +696,10 @@ const VideoCall: React.FC<VideoCallProps> = ({
   }, [autoStart, targetUserId, incomingOffer, isCallActive, startCall]);
 
   useEffect(() => {
+    isCallActiveRef.current = isCallActive;
+  }, [isCallActive]);
+
+  useEffect(() => {
     return () => {
       // React 18 StrictMode runs effect cleanup once on mount in dev.
       // Skip the first cleanup to avoid ending calls immediately.
@@ -705,11 +710,11 @@ const VideoCall: React.FC<VideoCallProps> = ({
         skipCleanupOnceRef.current = false;
         return;
       }
-      if (isCallActive) {
+      if (isCallActiveRef.current) {
         endCall(true, "cleanup");
       }
     };
-  }, [isCallActive, endCall]);
+  }, [endCall]);
 
   useEffect(() => {
     setLocalPreviewPos({ x: 16, y: 16 });
